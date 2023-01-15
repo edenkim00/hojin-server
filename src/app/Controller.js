@@ -207,25 +207,9 @@ exports.voteResult = async function (req, res) {
     // 1/8 homework : TODO => 쿼리 한번만 써서 가장 투표수 많은 종목 알아내는 방식으로 고쳐오기!
 
     const result = await Provider.voteResult([date, grade]);
-    const basketballCount = result[0][0].count
-    const badmintonCount = result[1][0].count
-    const volleyballCount = result[2][0].count
-    let maxResult
-    if (basketballCount > badmintonCount && basketballCount > volleyballCount) {
-        maxResult = {
-            "date": date,
-            "voteResult": "Basketball"
-        }
-    } else if (badmintonCount > volleyballCount) {
-        maxResult = {
-            "date": date,
-            "voteResult": "Badminton"
-        }
-    } else {
-        maxResult = {
-            "date": date,
-            "voteResult": "Vollyball"
-        }
+    const maxResult = {
+        "date": date,
+        "voteResult": result
     }
     return res.send(response(baseResponse.SUCCESS, maxResult));
 }
