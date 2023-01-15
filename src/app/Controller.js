@@ -12,6 +12,7 @@ var CryptoJS = require("crypto-js");
 var SHA256 = require("crypto-js/sha256");
 var Base64 = require("crypto-js/enc-base64");
 const e = require("express");
+
 const getGrade = (graduationYear) => {
     const currentYear = new Date().getFullYear()
     const currentMonth = new Date().getMonth() + 1;
@@ -19,8 +20,10 @@ const getGrade = (graduationYear) => {
         (currentMonth >= 8 ? 1 : 0);
     return diff > 9 ? "HS" : "MS";
 }
+
 // 회원가입
 exports.postUser = async function (req, res) {
+    console.log("??")
 
     const { email, password, name, graduationYear } = req.body;
 
@@ -160,16 +163,22 @@ exports.mypageInfo = async function (req, res) {
 
 exports.vote = async function (req, res) {
     const userId = req.verifiedToken.userId;
-
-    if (!userId) {
+    // 4001
+    if (userId == null) {
         return res.send(errResponse(baseResponse.TOKEN_ERROR));
     }
 
     const { date, sports } = req.body
-    // 1. date, sports null 값인지 체크 
+    // 1001
+    if (date == null || sports == null) {
+        return res.send(errResponse(baseResponse.WRONG_BODY));
+    }
 
-    // 2. 중복확인 이사람이 이미 투표한 사람인지 그 날짜에?
-
+    // 5001 
+    const doubleCheckResult = await Provider.doubleCheckVote([userId, date]);
+    if (doubleCheckResult.length > 0) {
+        return res.send(errResponse(baseResponse.ALREADY_EXIST_VOTE));
+    }
 
     const gradeYear = await Provider.getGradeYearUser(userId);
     if (gradeYear.length == 0) {
@@ -181,4 +190,42 @@ exports.vote = async function (req, res) {
 
     const result = await Service.vote(params);
     return res.send(response(baseResponse.SUCCESS));
+}
+
+exports.voteResult = async function (req, res) {
+    const { date, grade } = req.query
+    // 2001
+    if (date == null || grade == null) {
+        return res.send(errResponse(baseResponse.WRONG_QUERY_STRING));
+    }
+    const currentDate = new Date()
+    const requestDate = new Date(date)
+    // 6001
+    if (requestDate > currentDate) {
+        return res.send(errResponse(baseResponse.DATE_ERROR));
+    }
+    // 1/8 homework : TODO => 쿼리 한번만 써서 가장 투표수 많은 종목 알아내는 방식으로 고쳐오기!
+
+    const result = await Provider.voteResult([date, grade]);
+    const basketballCount = result[0][0].count
+    const badmintonCount = result[1][0].count
+    const volleyballCount = result[2][0].count
+    let maxResult
+    if (basketballCount > badmintonCount && basketballCount > volleyballCount) {
+        maxResult = {
+            "date": date,
+            "voteResult": "Basketball"
+        }
+    } else if (badmintonCount > volleyballCount) {
+        maxResult = {
+            "date": date,
+            "voteResult": "Badminton"
+        }
+    } else {
+        maxResult = {
+            "date": date,
+            "voteResult": "Vollyball"
+        }
+    }
+    return res.send(response(baseResponse.SUCCESS, maxResult));
 }

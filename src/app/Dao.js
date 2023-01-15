@@ -51,6 +51,23 @@ async function vote(connection, params) {
   return result;
 }
 
+async function doubleCheckVote(connection, params) {
+  // @params : [userId, date]
+  const Query = `SELECT id from Vote WHERE userID = ? and date = ? and status='activate'`;
+  const [result] = await connection.query(Query, params);
+  return result;
+}
+
+async function voteResult(connection, params) {
+  const Query = `SELECT count(sports) as count from Vote WHERE sports = "Basketball" and date = ? and grade = ? and status='activate';`;
+  const Query2 = `SELECT count(sports) as count from Vote WHERE sports = "Badminton" and date = ? and grade = ? and status='activate'`;
+  const Query3 = `SELECT count(sports) as count from Vote WHERE sports = "Volleyball" and date = ? and grade = ? and status='activate'`;
+  const [result] = await connection.query(Query, params);
+  const [result2] = await connection.query(Query2, params);
+  const [result3] = await connection.query(Query3, params);
+  return [result, result2, result3]
+}
+
 module.exports = {
   getUserByEmail,
   postUser,
@@ -60,4 +77,6 @@ module.exports = {
   getUserInfo,
   getGradeYearUser,
   vote,
+  doubleCheckVote,
+  voteResult,
 };

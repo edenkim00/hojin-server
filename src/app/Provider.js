@@ -39,3 +39,17 @@ exports.getGradeYearUser = async function(userId){
   connection.release();
   return result;
 }
+
+exports.doubleCheckVote = async function(params){
+  const connection = await pool.getConnection(async (conn) => conn);
+  const result = await Dao.doubleCheckVote(connection, params);
+  connection.release();
+  return result;
+}
+
+exports.voteResult = async function(params) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const result = await Dao.voteResult(connection, params);
+  connection.release();
+  return result;
+}
